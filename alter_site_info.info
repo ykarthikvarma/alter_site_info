@@ -1,0 +1,4 @@
+name = "Alter Site Information"
+description = "Add new field to site info and perform as per axelerant requirements"
+package = "Custom"
+core = "7.x"

@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * Implements hook_fomr_alter().
+ *
+ * Add Site API Key field to the system_site_information_settings form.
+ */
+
+function alter_site_info_form_alter(&$form, $form_state, $form_id) {
+
+//Check for specfic form ID
+
+	if($form_id=="system_site_information_settings"){
+
+	//Create a new field to be added to form
+	$form['siteapikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site API Key'),
+    '#default_value' => variable_get('siteapikey', 'NO API key yet'),
+    '#description' => t('Provide the site API key if available'),
+    );
+	
+	// Change the label of submit button
+	$form['actions']['submit']['#value'] = t('Update Configuration');
+	
+	// Add custom submit handler to do additional stuff like displaying message for instance
+	$form['#submit'][] = 'custom_submit_function';
+	
+	}
+}
+
+/**
+ *  Custom Submit handler
+ */
+
+function custom_submit_function($form, &$form_state) {
+  drupal_set_message("Site API Key has been saved with ".$form_state['values']['siteapikey']." as value");
+}
+
+/**
+ * Implements hook_menu().
+ *
+ * Add the custom URL's like http://localhost/page_json/FOOBAR12345/17 for instance. Here I am making it like page_json/apikey/nid
+ */
+
+function alter_site_info_menu() {
+    $items['page_json/%/%'] = array(
+        'access callback'   => true, // available to all
+        'page callback'     => 'alter_site_info_something_useful', // defined below
+		'page arguments' => array(1,2),
+        'delivery callback' => 'drupal_json_output' 
+    );
+    return $items;
+}
+
+
+
+function alter_site_info_something_useful($arg1,$arg2) {
+
+//Get the siteapikey value for checking
+$api = variable_get('siteapikey', 'NO API key yet');
+
+if($arg2){
+$n_node = node_load($arg2);
+$n_node_title = $n_node->title;
+}
+
+
+//if siteapikey and arg1 passed are valid then provide data
+if($api == $arg1) {
+  return array('arg1'=>$arg1,'arg2'=>$n_node_title);
+  }
+// else return access denied
+else { 
+	drupal_access_denied();
+	module_invoke_all('exit');
+	drupal_exit();
+  }
+}
